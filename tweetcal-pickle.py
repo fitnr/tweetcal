@@ -13,9 +13,10 @@ import icalendar
 #import pytz
 #import twitter
 from datetime import timedelta
-import tweetcal_keys as keys
-import tweepy
+#import tweetcal_keys as keys
+#import tweepy
 import pickle
+import codecs
 
 # Constants
 # Todo: change to argument
@@ -33,13 +34,13 @@ def parse_date(datetime):
 
 
 def create_event(tweet):
+    """Has a problem with \u221a\xa9"""
     event = icalendar.Event()
 
-    text = icalendar.prop.vText(tweet.text).to_ical()
-    print text
+    #text = icalendar.prop.vText(tweet.text).to_ical()
 
     try:
-        event['summary'] = text
+        event['summary'] = tweet.text
         event.add('description', 'http://twitter.com/' + tweet.user.screen_name + '/' + tweet.id_str)
         event['dtstart'] = parse_date(tweet.created_at)
         event['dtend'] = parse_date(tweet.created_at + timedelta(seconds=30))
@@ -57,6 +58,7 @@ def create_event(tweet):
 
 def main():
     contents = open(FILENAME, 'rb').read()
+
     # Open calendar file
     cal = icalendar.Calendar.from_ical(contents)
 
@@ -64,26 +66,29 @@ def main():
         #last_id = get_latest_id(cal)
 
         # Auth and check twitter
-        auth = tweepy.OAuthHandler(keys.consumer_key, keys.consumer_secret)
-        auth.set_access_token(keys.access_token, keys.access_token_secret)
-        api = tweepy.API(auth)
+        #auth = tweepy.OAuthHandler(keys.consumer_key, keys.consumer_secret)
+        #auth.set_access_token(keys.access_token, keys.access_token_secret)
+        #api = tweepy.API(auth)
 
         #tweets = api.user_timeline(since_id=last_id, count=200)
-        tweets = api.user_timeline(since_id=218348003273084928, max_id=218349282380623871, count=200)
+        #tweets = api.user_timeline(since_id=210468705950384129, max_id=218349282380623871, count=200)
+
+        p = open('pickletweets.pickle', 'rb')
+        tweets = pickle.load(p)
 
         print "[tweetcal] fetched " + str(len(tweets))
 
         # Reverse so that the last shall be first
         tweets.reverse()
 
-        f = open(FILENAME, 'wb')
-
         for tweet in tweets:
             event = create_event(tweet)
             cal.add_component(event)
             most_recent = tweet.text
-            f.writelines([cal.to_ical()])
 
+        ical = cal.to_ical()
+        f = open(FILENAME, 'wb')
+        f.write(ical)
         f.close()
 
         print '[tweetcal] Inserted some tweets. Most recent was: ' + most_recent
