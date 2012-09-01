@@ -10,7 +10,7 @@ Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 #import sys
 #import os
 import icalendar
-#import pytz
+import pytz
 #import twitter
 from datetime import timedelta
 #import tweetcal_keys as keys
@@ -30,7 +30,9 @@ def get_latest_id(calendar):
 
 
 def parse_date(datetime):
-    return icalendar.prop.vDDDTypes(datetime)
+    start = datetime.replace(tzinfo=pytz.UTC)
+    end = start + timedelta(seconds=30)
+    return start, end
 
 
 def create_event(tweet):
@@ -38,12 +40,13 @@ def create_event(tweet):
     event = icalendar.Event()
 
     #text = icalendar.prop.vText(tweet.text).to_ical()
+    start, end = parse_date(tweet.created_at)
 
     try:
         event['summary'] = tweet.text
         event.add('description', 'http://twitter.com/' + tweet.user.screen_name + '/' + tweet.id_str)
-        event['dtstart'] = parse_date(tweet.created_at)
-        event['dtend'] = parse_date(tweet.created_at + timedelta(seconds=30))
+        event.add('dtstart', start)
+        event.add('dtend', end)
         event['uid'] = tweet.id_str + '@fakeisthenewreal'
         event['id_str'] = tweet.id_str
 
