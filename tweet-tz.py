@@ -6,21 +6,23 @@
 import icalendar
 import pytz
 #import twitter
-from datetime import timedelta
 #import tweetcal_keys as keys
 #import tweepy
-import pickle
-import codecs
+
+FILENAME = 'tweets.ics'
+
 
 def main():
-    p = open('pickletweets.pickle', 'rb')
-    tweets = pickle.load(p)
+    contents = open(FILENAME, 'rb').read()
+    cal = icalendar.Calendar.from_ical(contents)
+    comps = cal.walk()
 
-    t = tweets[0]
-    print t.created_at
-    print t.id_str
-    aware = 
-    print aware
+    for c in comps[1:10]:
+      start = icalendar.prop.vDDDTypes.from_ical(c['DTSTART'])
+      newstart = start.replace(tzinfo=pytz.UTC)
+      print type(newstart)
+
+      #c['dtend'] = c['dtend'].replace(tzinfo=pytz.UTC)
 
 if __name__ == '__main__':
     main()
