@@ -16,7 +16,6 @@ from datetime import timedelta
 #import tweetcal_keys as keys
 #import tweepy
 import pickle
-import codecs
 
 # Constants
 # Todo: change to argument
