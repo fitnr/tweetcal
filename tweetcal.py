@@ -4,22 +4,30 @@
 tweetcal.py
 
 Created by neil on 2012-06-09.
-Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+Copyright (c) 2012 Neil Freeman. All rights reserved.
 """
 
-#import sys
-#import os
+import sys
+import os
 from icalendar import Calendar, Event
 import pytz
-#import twitter
+import argparse
 from datetime import timedelta
-import tweetcal_keys as keys
+import tweetcal_keys as twkeys
 import tweepy
 import logging
 
-# Constants
-# Todo: change to argument
-FILENAME = 'fitnr-new-tweets.ics'
+# Constant
+PATH = os.path.dirname(sys.argv[0])
+
+
+class no_tweets_exception(Exception):
+
+    def __init__(self, value):
+        self.parameter = value
+
+    def __str__(self):
+        return repr(self.parameter)
 
 
 def parse_date(datetime):
@@ -33,14 +41,16 @@ def create_event(tweet):
 
     try:
         start, end = parse_date(tweet.created_at)
-        desc = '<a href="http://twitter.com/{0}/{1}">tweet</a>'.format(tweet.user.screen_name, tweet.id_str)
+        url = 'http://twitter.com/{0}/{1}'.format(tweet.user.screen_name, tweet.id_str)
+        text = tweet.text.replace('&amp;', '&')
 
-        event.add('summary', tweet.text)
-        event.add('description', desc)
+        event.add('summary', text)
+        event.add('description', text)
+        event.add('url', url)
         event.add('dtstart', start)
         event.add('dtend', end)
         event.add('uid', '{0}@fakeisthenewreal'.format(tweet.id_str))
-        event['id_str'] = tweet.id_str
+        event['X-TWEET-ID'] = tweet.id_str
 
     except Exception, e:
         logger.error(e)
@@ -49,31 +59,68 @@ def create_event(tweet):
         return event
 
 
-def main():
+def main(argv=None):
+    description = 'Grab tweets into an ics file.'
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('--user', type=str, help='user to grab. Must be in config file.', required=True)
+    parser.add_argument('--method', default='present', choices=['present', 'past'], required=False, help='Start in the past, or in the present.')
+    args = parser.parse_args()
+
+    method = args.method
+    user = args.user
+    settings = twkeys.keys[user]
+
+    filename = PATH + '/' + settings['file']
+
     # Open calendar file
-    contents = open(FILENAME, 'rb').read()
-    cal = Calendar.from_ical(contents)
+    contents = open(filename, 'rb').read()
+
+    if contents == '':
+        cal = Calendar()
+        cal.add('PRODID', '-//twitter maker//fake is the new real//EN')
+        cal.add('X-WR-CALNAME', user + ' tweets')
+
+    else:
+        cal = Calendar.from_ical(contents)
 
     logger.debug("Opened calendar file and it's this kind of object: {0}".format(type(contents)))
 
     try:
-        # Get the last id.
-        last_id = cal['X-LAST-TWEET-ID']
+        twargs = {}
+        twargs['count'] = 200
+
+        if method == 'present':
+            # Get the last id.
+            key = cal['X-LAST-TWEET-ID']
+            twargs['since_id'] = key
+
+        elif method == 'past':
+            # Get the last id.
+            key = cal['X-MAX-TWEET-ID']
+            twargs['max_id'] = key
 
         # Auth and check twitter
-        auth = tweepy.OAuthHandler(keys.consumer_key, keys.consumer_secret)
-        auth.set_access_token(keys.access_token, keys.access_token_secret)
+        auth = tweepy.OAuthHandler(twkeys.consumer_key, twkeys.consumer_secret)
+        auth.set_access_token(settings.access_token, settings.access_token_secret)
         api = tweepy.API(auth)
 
-        # Fetch the tweets
-        #tweets = api.user_timeline(since_id=218348003273084928, max_id=218349282380623871, count=200)
-        tweets = api.user_timeline(since_id=last_id, count=200)
+        if api.test():
+            # Fetch the tweets
+            #tweets = api.user_timeline(since_id=218348003273084928, max_id=218349282380623871, count=200)
+            tweets = api.user_timeline(**twargs)
+        else:
+            raise Exception('Twitter API problem')
 
-        logger.info("[tweetcal] fetched {0}, last was {1}".format(len(tweets), last_id))
+        if len(tweets) == 0:
+            raise no_tweets_exception("No tweets")
 
-        # Reverse so that the last shall be first
-        tweets.reverse()
+        else:
+            # Reverse so that the last shall be first
+            tweets.reverse()
+            final_id = tweets[-1].id_str
+            logger.info("[tweetcal] fetched {0} tweets, last was {1}".format(len(tweets), final_id))
 
+        # Create the events
         for tweet in tweets:
             event = create_event(tweet)
             cal.add_component(event)
@@ -81,19 +128,24 @@ def main():
         # Set some global settings for the file.
         last_id = tweets[-1].id_str
         cal['X-LAST-TWEET-ID'] = last_id
-        cal['X-APPLE-CALENDAR-COLOR'] = tweets[-1].profile_link_color
+        cal['X-APPLE-CALENDAR-COLOR'] = '#' + tweets[-1].user.profile_link_color
 
         # Write to file.
         ical = cal.to_ical()
-        f = open(FILENAME, 'wb').read
+        f = open(filename, 'wb')
         f.write(ical)
         f.close()
 
         logger.info('[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(tweets[-1].text, len(tweets)))
 
-    except Exception, e:
-        f.write(cal.to_ical())
+    except tweepy.TweepError, e:
         logger.error(e)
+    except no_tweets_exception, e:
+        logger.error(e)
+    except Exception, e:
+        logger.error(e)
+        g = open(filename, 'wb')
+        g.write(contents)
         raise
 
 if __name__ == '__main__':
@@ -101,8 +153,8 @@ if __name__ == '__main__':
 
     # file logging
     fh_formatter = logging.Formatter('%(asctime)s %(name)-16s %(levelname)-8s %(message)s')
-    fh = logging.FileHandler('../log/tweetcal.log')
-    fh.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(PATH + '/tweetcal.log')
+    fh.setLevel(0)
     fh.setFormatter(fh_formatter)
     logger.addHandler(fh)
 
