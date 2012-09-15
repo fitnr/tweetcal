@@ -69,8 +69,9 @@ def main(argv=None):
     method = args.method
     user = args.user
     settings = twkeys.keys[user]
-
-    filename = PATH + '/' + settings['file']
+    filename = (PATH or '.') + '/' + settings['file']
+    twargs = {}
+    twargs['count'] = 200
 
     # Open calendar file
     contents = open(filename, 'rb').read()
@@ -79,29 +80,30 @@ def main(argv=None):
         cal = Calendar()
         cal.add('PRODID', '-//twitter maker//fake is the new real//EN')
         cal.add('X-WR-CALNAME', user + ' tweets')
+        method = 'present'
+        cal['X-SINCE-TWEET-ID'] = 0
+        twargs['since_id'] = 0
 
     else:
         cal = Calendar.from_ical(contents)
 
     logger.debug("Opened calendar file and it's this kind of object: {0}".format(type(contents)))
 
-    try:
-        twargs = {}
-        twargs['count'] = 200
-
+    if contents != '':
         if method == 'present':
             # Get the last id.
-            key = cal['X-LAST-TWEET-ID']
+            key = cal['X-SINCE-TWEET-ID']
             twargs['since_id'] = key
 
         elif method == 'past':
             # Get the last id.
             key = cal['X-MAX-TWEET-ID']
             twargs['max_id'] = key
+    try:
 
         # Auth and check twitter
         auth = tweepy.OAuthHandler(twkeys.consumer_key, twkeys.consumer_secret)
-        auth.set_access_token(settings.access_token, settings.access_token_secret)
+        auth.set_access_token(settings['access_token'], settings['access_token_secret'])
         api = tweepy.API(auth)
 
         if api.test():
@@ -117,17 +119,23 @@ def main(argv=None):
         else:
             # Reverse so that the last shall be first
             tweets.reverse()
-            final_id = tweets[-1].id_str
-            logger.info("[tweetcal] fetched {0} tweets, last was {1}".format(len(tweets), final_id))
+            logger.info("[tweetcal] fetched {0} tweets.".format(len(tweets)))
 
         # Create the events
         for tweet in tweets:
             event = create_event(tweet)
             cal.add_component(event)
 
-        # Set some global settings for the file.
-        last_id = tweets[-1].id_str
-        cal['X-LAST-TWEET-ID'] = last_id
+        if method == 'present':
+            x_id = tweets[-1].id_str
+            cal['X-SINCE-TWEET-ID'] = x_id
+
+        elif method == 'past':
+            x_id = tweets[0].id_str
+            cal['X-MAX-TWEET-ID'] = x_id
+
+        logger.info('[tweetcal] last/max was {0}'.format(x_id))
+
         cal['X-APPLE-CALENDAR-COLOR'] = '#' + tweets[-1].user.profile_link_color
 
         # Write to file.
@@ -152,13 +160,13 @@ if __name__ == '__main__':
     logger = logging.getLogger('tweetcal')
 
     # file logging
-    fh_formatter = logging.Formatter('%(asctime)s %(name)-16s %(levelname)-8s %(message)s')
-    fh = logging.FileHandler(PATH + '/tweetcal.log')
-    fh.setLevel(0)
-    fh.setFormatter(fh_formatter)
-    logger.addHandler(fh)
+    # fh_formatter = logging.Formatter('%(asctime)s %(name)-16s %(levelname)-8s %(message)s')
+    # fh = logging.FileHandler(PATH + '/tweetcal.log')
+    # fh.setLevel(0)
+    # fh.setFormatter(fh_formatter)
+    # logger.addHandler(fh)
 
-    # console logging
+    # # console logging
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     ch_formatter = logging.Formatter('%(levelname)-8s %(message)s')
