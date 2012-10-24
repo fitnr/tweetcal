@@ -41,7 +41,7 @@ def create_event(tweet):
 
     try:
         start, end = parse_date(tweet.created_at)
-        url = 'http://twitter.com/{0}/{1}'.format(tweet.user.screen_name, tweet.id_str)
+        url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
         text = tweet.text.replace('&amp;', '&')
 
         event.add('summary', text)
@@ -144,7 +144,7 @@ def main(argv=None):
         f.write(ical)
         f.close()
 
-        logger.info('[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(tweets[-1].text, len(tweets)))
+        logger.info(u'[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(tweets[-1].text, len(tweets)))
 
     except tweepy.TweepError, e:
         logger.error(e)
