@@ -106,7 +106,7 @@ def main(argv=None):
         auth.set_access_token(settings['access_token'], settings['access_token_secret'])
         api = tweepy.API(auth)
 
-        if api.test():
+        if api:
             # Fetch the tweets
             #tweets = api.user_timeline(since_id=218348003273084928, max_id=218349282380623871, count=200)
             tweets = api.user_timeline(**twargs)
