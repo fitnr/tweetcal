@@ -12,7 +12,7 @@ import pytz
 import argparse
 import codecs
 from datetime import timedelta
-import tweetcal_config as twkeys
+from . import tweetcal_config as twkeys
 import tweepy
 import logging
 
@@ -37,7 +37,7 @@ def create_event(tweet):
     try:
         start, end = parse_date(tweet.created_at)
         url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
-        text = tweet.text.replace(u'&amp;', u'&')
+        text = tweet.text.replace('&amp;', '&')
 
         event.add('summary', text)
         event.add('url', url)
@@ -46,7 +46,7 @@ def create_event(tweet):
         event.add('uid', '{0}@{1}'.format(tweet.id_str, tweet.user.screen_name))
         event['X-TWEET-ID'] = tweet.id_str
 
-    except Exception, e:
+    except Exception as e:
         logger.error('[tweetcal] ', e)
         logger.error("[tweetcal] {0} [{1} created at {2}]".format(tweet.text, tweet.id_str, tweet.created_at))
     else:
@@ -104,8 +104,8 @@ def get_tweets(**kwargs):
         if not cursor.items:
             raise no_tweets_exception("No tweets")
 
-    except Exception, e:
-        print 'API error!'
+    except Exception as e:
+        print('API error!')
         raise e
 
     return cursor
@@ -149,7 +149,7 @@ def main():
         cursor = get_tweets(**settings)
 
         # Loop the cursors and create the events if the tweet doesn't yet exist
-        for status in cursor.items():
+        for status in list(cursor.items()):
             if status.id in idset:
                 logger.warn('[tweetcal] not inserting' + status.id_str)
                 continue
@@ -157,17 +157,17 @@ def main():
             event = create_event(status)
             cal.add_component(event)
 
-        logger.info(u'[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(status.text, len(added_ids)))
+        logger.info('[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(status.text, len(added_ids)))
 
-    except tweepy.TweepError, e:
+    except tweepy.TweepError as e:
         logger.error(e)
         return
 
-    except no_tweets_exception, e:
+    except no_tweets_exception as e:
         logger.error(e)
         return
 
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
         return
 
@@ -175,13 +175,13 @@ def main():
         set_max_id(cal, idset, added_ids)
         cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
 
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
 
     try:
         ical = cal.to_ical()
 
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
         return
 
