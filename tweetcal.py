@@ -63,7 +63,8 @@ def main(argv=None):
     description = 'Grab tweets into an ics file.'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--user', type=str, help='user to grab. Must be in config file.', required=True)
-    parser.add_argument('--method', default='present', choices=['present', 'past'], required=False, help='Start in the past, or in the present.')
+    parser.add_argument('--method', default='present', choices=[
+                        'present', 'past'], required=False, help='Start in the past, or in the present.')
     args = parser.parse_args()
 
     method = args.method
@@ -74,7 +75,8 @@ def main(argv=None):
     twargs['count'] = 200
 
     # Open calendar file
-    contents = open(filename, 'rb').read()
+    with open(filename, 'rb') as h:
+        contents = h.read()
 
     if contents == '':
         cal = Calendar()
@@ -140,9 +142,8 @@ def main(argv=None):
 
         # Write to file.
         ical = cal.to_ical()
-        f = open(filename, 'wb')
-        f.write(ical)
-        f.close()
+        with open(filename, 'wb') as f:
+            f.write(ical)
 
         logger.info(u'[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(tweets[-1].text, len(tweets)))
 
@@ -152,8 +153,8 @@ def main(argv=None):
         logger.error(e)
     except Exception, e:
         logger.error(e)
-        g = open(filename, 'wb')
-        g.write(contents)
+        with open(filename, 'wb') as g:
+            g.write(contents)
         raise
 
 if __name__ == '__main__':
@@ -166,7 +167,7 @@ if __name__ == '__main__':
     # fh.setFormatter(fh_formatter)
     # logger.addHandler(fh)
 
-    # # console logging
+    # console logging
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     ch_formatter = logging.Formatter('%(levelname)-8s %(message)s')

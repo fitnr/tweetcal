@@ -5,10 +5,10 @@ tweetcal.py
 
 Created by neil on 2012-06-07.
 Copyright (c) 2012 fake is the new real. All rights reserved.
-"""
 
-import sys
-import os
+Reads a CSV with the following columns into a calendar:
+date, time, tweet, link (to tweet)
+"""
 import icalendar
 from pytz import UTC
 #import twitter
@@ -35,12 +35,12 @@ def main():
 
     stamp = datetime.now(tz=UTC)
 
-    #read csv
+    # read csv
     reader = unicode_csv_reader(open('fitnr_backup-2012-06-06.csv'))
     reader.next()
     for row in reader:
         event = icalendar.Event()
-        #print row
+        # print row
         [date, time, tweet, link] = row
         [year, month, day] = [int(x) for x in date.split('-')]
         [hour, minute, sec] = [int(x) for x in time.split(':')]
