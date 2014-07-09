@@ -10,11 +10,14 @@ from os import path
 from icalendar import Calendar, Event
 import pytz
 import argparse
-import codecs
 from datetime import timedelta
-from . import tweetcal_config as twkeys
 import tweepy
 import logging
+try:
+    from . import tweetcal_config as twkeys
+except Exception:
+    import tweetcal_config as twkeys
+
 
 class no_tweets_exception(Exception):
 
@@ -47,8 +50,8 @@ def create_event(tweet):
         event['X-TWEET-ID'] = tweet.id_str
 
     except Exception as e:
-        logger.error('[tweetcal] ', e)
-        logger.error("[tweetcal] {0} [{1} created at {2}]".format(tweet.text, tweet.id_str, tweet.created_at))
+        logger.error(e)
+        logger.error("{0} [{1} created at {2}]".format(tweet.text, tweet.id_str, tweet.created_at))
     else:
         return event
 
@@ -57,9 +60,9 @@ def get_calendar(filename, user):
     '''Open calendar file and return as Calendar object, along with list of IDs retrieved (to avoid dupes)'''
     idset = set()
 
-    with codecs.open(filename, 'rb', 'utf-8') as h:
+    with open(filename, 'rb') as h:
         contents = h.read()
-        logger.debug("[tweetcal] Opened calendar file and it's this kind of object: {0}".format(type(contents)))
+        logger.debug("Opened calendar file and it's this kind of object: {0}".format(type(contents)))
 
     if contents == '':
         cal = Calendar()
@@ -68,7 +71,7 @@ def get_calendar(filename, user):
 
     else:
         cal = Calendar.from_ical(contents)
-        idset = set(int(e.get('X-TWEET-ID')) for e in cal.subcomponents)
+        idset = set(int(e['X-TWEET-ID']) for e in cal.subcomponents if e.get('X-TWEET-ID'))
 
     return cal, idset
 
@@ -77,22 +80,24 @@ def set_max_sin(cal, since_id=None, max_id=None):
     '''Set the max and since ids to request from twitter. If the calendar has a max ID, use it as the since'''
     since_id = since_id or cal.get('X-MAX-TWEET-ID', None)
 
+    # Assume this means you're looking for earlier tweets
+    if max_id < since_id:
+        since_id = None
+
     return max_id, since_id
 
 
 def set_max_id(cal, list1, list2):
-    if len(list1) == 0:
-        list1 = [0]
+    '''Combine set of read IDs and just-added IDs to get the new max id'''
+    list_of_ids = list(list1) + list(list2)
+    maxid = max(list_of_ids)
 
-    if len(list2) == 0:
-        list2 = [0]
-
-    maxid = max(max(list1), max(list2))
     cal['X-MAX-TWEET-ID'] = maxid
-    logger.info('[tweetcal] set {1} to {0}'.format(maxid, 'X-MAX-TWEET-ID'))
+    logger.info('set {1} to {0}'.format(maxid, 'X-MAX-TWEET-ID'))
 
 
 def get_tweets(**kwargs):
+    logger.debug("Getting tweets with these args {0}".format(kwargs))
     try:
         # Auth and check twitter
         auth = tweepy.OAuthHandler(twkeys.consumer_key, twkeys.consumer_secret)
@@ -122,11 +127,11 @@ def main():
 
     args = parser.parse_args()
 
-    logger.info("[tweetcal] Starting to grab tweets for " + args.user)
+    logger.info("Starting to grab tweets for " + args.user)
 
     settings = twkeys.keys.get(args.user, {})
     if not settings.get('access_token') and not settings.get('access_token_secret'):
-        logger.info("[tweetcal] Don't have a key for this user.")
+        logger.info("Don't have a key for this user.")
         return
 
     calfile = path.join((path.dirname(__file__) or '.'), settings['file'])
@@ -143,38 +148,34 @@ def main():
 
     settings['twargs'] = twargs
 
-    added_ids = []
-
     try:
         cursor = get_tweets(**settings)
+        status, added_ids = False, []
 
         # Loop the cursors and create the events if the tweet doesn't yet exist
         for status in list(cursor.items()):
-            if status.id in idset:
-                logger.warn('[tweetcal] not inserting' + status.id_str)
-                continue
             added_ids.append(status.id)
+            if status.id in idset:
+                logger.debug('not inserting ' + status.id_str)
+                continue
             event = create_event(status)
             cal.add_component(event)
 
-        logger.info('[tweetcal] Inserted {1} tweets. Most recent was: {0}'.format(status.text, len(added_ids)))
-
-    except tweepy.TweepError as e:
+    except (tweepy.TweepError, no_tweets_exception) as e:
         logger.error(e)
-        return
-
-    except no_tweets_exception as e:
-        logger.error(e)
-        return
 
     except Exception as e:
         logger.error(e)
         return
 
     try:
-        set_max_id(cal, idset, added_ids)
-        cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
+        if status:
+            logger.info('Inserted {1} tweets. Most recent was: {0}'.format(status.text, len(added_ids)))
+            cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
+        else:
+            logger.info('Did not find any new tweets')
 
+        set_max_id(cal, idset, added_ids)
     except Exception as e:
         logger.error(e)
 
@@ -186,8 +187,8 @@ def main():
         return
 
     # Write to file
-    with codecs.open(calfile, 'wb', 'utf-8') as f:
-        logger.info('[tweetcal] writing to file')
+    with open(calfile, 'wb') as f:
+        logger.info('writing to file')
         f.write(ical)
 
 
@@ -204,7 +205,7 @@ if __name__ == '__main__':
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
-    ch.setFormatter(logging.Formatter('%(levelname)-5s line %(lineno)d %(message)s'))
+    ch.setFormatter(logging.Formatter('%(levelname)-5s [tweetcal] %(message)s'))
     logger.addHandler(ch)
 
     main()
