@@ -4,17 +4,11 @@
 tweetcal.py
 
 Created by neil on 2012-06-09.
-Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+Copyright (c) 2012 fake is the new real. All rights reserved.
 """
-
-#import sys
-#import os
 import icalendar
 import pytz
-#import twitter
 from datetime import timedelta
-#import tweetcal_keys as keys
-#import tweepy
 import pickle
 
 # Constants
