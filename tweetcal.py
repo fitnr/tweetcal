@@ -22,6 +22,7 @@ except Exception:
 class no_tweets_exception(Exception):
 
     def __init__(self, value):
+        super(no_tweets_exception, self).__init__()
         self.parameter = value
 
     def __str__(self):
@@ -41,6 +42,8 @@ def create_event(tweet):
         start, end = parse_date(tweet.created_at)
         url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
         text = tweet.text.replace('&amp;', '&')
+
+        # Todo: Replace t.co shortened URLs with full URLs using entities
 
         event.add('summary', text)
         event.add('url', url)
@@ -150,7 +153,7 @@ def main():
 
     try:
         cursor = get_tweets(**settings)
-        status, added_ids = False, []
+        added_ids = []
 
         # Loop the cursors and create the events if the tweet doesn't yet exist
         for status in list(cursor.items()):
@@ -198,7 +201,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     # file logging
-    fh = logging.FileHandler(path.join(filepath + 'tweetcal.log'))
+    fh = logging.FileHandler(path.join(filepath, 'tweetcal.log'))
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter('%(asctime)s %(name)-16s line %(lineno)d %(levelname)-5s %(message)s'))
     logger.addHandler(fh)

@@ -17,6 +17,7 @@ import csv
 
 csv.register_dialect('tweets', delimiter=',', quoting=csv.QUOTE_ALL)
 
+elapse = timedelta(seconds=60)
 
 def unicode_csv_reader(utf8_data, dialect='tweets', **kwargs):
     # csv.py doesn't do Unicode; encode temporarily as UTF-8
@@ -46,7 +47,6 @@ def main():
         [hour, minute, sec] = [int(x) for x in time.split(':')]
 
         tweet_time = datetime(year, month, day, hour, minute, sec, tzinfo=UTC)
-        elapse = timedelta(seconds=60)
 
         event['dtstart'] = iCalDate(tweet_time)
         event['dtend'] = iCalDate(tweet_time + elapse)
