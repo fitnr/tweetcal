@@ -1,4 +1,51 @@
 from setuptools import setup
 
+try:
+    from pypandoc import convert
+    def read_md(f):
+        try:
+            return convert(f, 'rst')
+        except IOError:
+            return ''
+
+except ImportError:
+    print("pypandoc module not found, could not convert Markdown to RST")
+    def read_md(f):
+        try:
+            return open(f, 'r').read()
+        except IOError:
+            return ''
+
+
 setup(
+    name='tweetcal',
+
+    version='0.3',
+
+    description='Python utilities for twitter bots',
+
+    long_description=read_md('readme.md'),
+
+    url='http://github.com/fitnr/tweetcal',
+
+    author='Neil Freeman',
+
+    author_email='contact@fakeisthenewreal.org',
+
+    license='GPL',
+
+    packages=['tweetcal'],
+
+    entry_points={
+        'console_scripts': [
+            'tweetcal=tweetcal.tweetcal:main',
+        ],
+    },
+
+    install_requires=[
+        'icalendar==3.8.4',
+        'tweepy',
+        'twitter_bot_utils==0.5.2'
+    ]
 )
+
