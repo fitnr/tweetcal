@@ -46,17 +46,21 @@ def create_event(tweet):
     event = Event()
 
     try:
+        # Add link to tweet.
         url = u'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
         event.add('url', url)
 
+        # Add tweet's text.
         text = tbu.helpers.replace_urls(tweet)
         text = HTMLParser().unescape(text)
         event.add('summary', text)
 
+        # Add tweet's date.
         dtstart, dtend = parse_date(tweet.created_at)
         event.add('dtstart', dtstart)
         event.add('dtend', dtend)
 
+        # Add UID and special field for ID.
         event.add('uid', u'{0}@{1}.twitter'.format(tweet.id_str, tweet.user.screen_name))
         event['X-TWEET-ID'] = tweet.id_str
 
@@ -108,8 +112,8 @@ def set_max_id(cal, max_id):
 
     logging.getLogger('tweetcal').debug('Set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
 
-def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
 
+def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
     # Auth and check twitter
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(key, secret)
