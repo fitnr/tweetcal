@@ -119,8 +119,7 @@ def set_max_id(cal, ids):
     except ValueError:
         max_id = 0
 
-    m = max(cal.get('X-MAX-TWEET-ID', 100000), max_id)
-    cal['X-MAX-TWEET-ID'] = m
+    cal['X-MAX-TWEET-ID'] = max(cal.get('X-MAX-TWEET-ID', 100000), max_id)
 
     logging.getLogger('tweetcal').debug('Set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
 
