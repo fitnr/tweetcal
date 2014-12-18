@@ -1,8 +1,7 @@
 import os
 import tweepy
 import unittest
-import logging
-from tweetcal import tweetcal
+from tweetcal import tweetcal, read_archive
 from icalendar import Calendar, Event
 
 TWEET = {
@@ -52,6 +51,8 @@ class test_twitter_bot_utils(unittest.TestCase):
     def test_create_event(self):
         event = tweetcal.create_event(self.status)
 
+        self.assertIsInstance(event, Event)
+
         assert event['summary'] == self.status.text
         assert event['dtstart'].dt.month == 5
 
@@ -61,17 +62,32 @@ class test_twitter_bot_utils(unittest.TestCase):
         assert cal['X-WR-CALNAME'] == self.screen_name + ' tweets'
 
     def test_get_cal(self):
-        ics = os.path.join(os.path.dirname(__file__), 'calendar.ics')
+        ics = os.path.join(os.path.dirname(__file__), 'data', 'calendar.ics')
         cal = tweetcal.get_calendar(ics)
 
         assert cal['VERSION'] == "2.0"
         assert len(cal.subcomponents) > 0
         self.assertEqual(str(cal.subcomponents[0]['SUMMARY']), 'Lorem ipsum dolor')
 
-        empty = os.path.join(os.path.dirname(__file__), 'empty.ics')
+        empty = os.path.join(os.path.dirname(__file__), 'data', 'empty.ics')
 
         self.assertRaises(IOError, tweetcal.get_calendar, empty)
         self.assertRaises(IOError, tweetcal.get_calendar, 'fake-2342.ics')
+
+    def test_save_archive(self):
+        archivepath = os.path.dirname(__file__)
+        ics = os.path.join(archivepath, 'test.ics')
+
+        read_archive.to_cal(archivepath, ics)
+        assert os.path.exists(ics)
+
+        cal = tweetcal.get_calendar(ics)
+
+        self.assertIsInstance(cal, Calendar)
+        assert len(cal.subcomponents) == 3
+        self.assertIsInstance(cal.subcomponents[0], Event)
+
+        os.remove(ics)
 
 
 if __name__ == '__main__':
