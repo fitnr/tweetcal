@@ -20,7 +20,7 @@ except ImportError:
 setup(
     name='tweetcal',
 
-    version='0.3',
+    version='0.4',
 
     description='Python utilities for twitter bots',
 
@@ -44,7 +44,7 @@ setup(
 
     install_requires=[
         'icalendar==3.8.4',
-        'tweepy',
+        'tweepy==3.1.0',
         'twitter_bot_utils==0.6.2'
     ]
 )
