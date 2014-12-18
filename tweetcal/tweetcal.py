@@ -40,9 +40,6 @@ def get_settings(args):
 
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
 
-    if args.max_id:
-        settings['max_id'] = args.max_id
-
     if args.since_id:
         settings['since_id'] = args.since_id
 
@@ -99,17 +96,10 @@ def get_calendar(filename, user):
     return cal
 
 
-def set_max_sin(cal, since_id=None, max_id=None):
+def get_since_id(cal, since_id=None):
     '''Set the max and since ids to request from twitter. If the calendar has a max ID, use it as the since'''
     output = dict()
     since_id = since_id or cal.get('X-MAX-TWEET-ID', None)
-
-    # Assume this means you're looking for earlier tweets
-    if max_id and max_id < since_id:
-        since_id = None
-
-    if max_id:
-        output['max_id'] = max_id
 
     if since_id:
         output['since_id'] = since_id
@@ -121,7 +111,8 @@ def set_max_sin(cal, since_id=None, max_id=None):
 
 def set_max_id(cal, max_id):
     '''Combine set of read IDs and just-added IDs to get the new max id'''
-    cal['X-MAX-TWEET-ID'] = max_id
+    m = max(cal['X-MAX-TWEET-ID'], max_id)
+    cal['X-MAX-TWEET-ID'] = m
 
     logging.getLogger('tweetcal').debug('Set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
 
@@ -153,7 +144,14 @@ def add_to_calendar(cal, cursor):
     if status:
         cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
 
-    set_max_id(cal, max(ids))
+    try:
+        max_id = max(ids)
+
+    # If that's empty, there will be a ValueError, which is fine.
+    except ValueError:
+        max_id = 0
+
+    set_max_id(cal, max_id)
 
 
 def write_calendar(cal, calendar_file):
@@ -166,7 +164,7 @@ def tweetcal(settings):
 
     cal = get_calendar(settings['file'], settings['user'])
 
-    max_since = set_max_sin(cal, settings.get('since_id'), settings.get('max_id'))
+    since = get_since_id(cal, settings.get('since_id'))
 
     cursor = get_tweets(
         consumer_key=settings['consumer_key'],
@@ -194,8 +192,6 @@ def main():
 
     parser.add_argument('--since_id', type=int, default=None,
                         required=False, help='Since ID: search tweets after this one.')
-    parser.add_argument('--max_id', type=int, default=None,
-                        required=False, help='Max ID: search tweets until this one.')
 
     args = parser.parse_args()
     settings = get_settings(args)
