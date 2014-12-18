@@ -4,7 +4,7 @@
 
 from os import path
 from icalendar import Calendar, Event
-from twitter_bot_utils import creation, helpers
+import twitter_bot_utils as tbu
 from HTMLParser import HTMLParser
 import pytz
 from datetime import timedelta
@@ -24,26 +24,16 @@ def setup_logger(verbose=None):
     return logger
 
 
-def get_settings(args):
-    settings = helpers.config_parse(args.config)
-
+def get_settings_and_keys(args):
     setup_logger(args.verbose or args.dry_run)
 
-    # Remove secret bits.
-    settings.update(settings['users'][args.user])
-    del settings['users']
+    argsdict = {k: v for k, v in vars(args).items() if v is not None}
 
-    settings.update({k: v for k, v in vars(args).items() if v is not None})
-
-    if not settings.get('key') or not settings.get('secret'):
-        raise KeyError("Incomplete settings: Don't have a key for this user.")
+    settings, keys = tbu.confighelper.configure(args.user, args.config, **argsdict)
 
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
 
-    if args.since_id:
-        settings['since_id'] = args.since_id
-
-    return settings
+    return settings, keys
 
 
 def parse_date(datetime):
@@ -59,7 +49,7 @@ def create_event(tweet):
         url = u'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
         event.add('url', url)
 
-        text = helpers.replace_urls(tweet)
+        text = tbu.helpers.replace_urls(tweet)
         text = HTMLParser().unescape(text)
         event.add('summary', text)
 
@@ -159,19 +149,22 @@ def write_calendar(cal, calendar_file):
     open(calendar_file, 'wb').write(ical)
 
 
-def tweetcal(settings):
+def tweetcal(settings, keys):
     logger = logging.getLogger('tweetcal')
+
+    if len(keys) != 4:
+        raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['user'])
 
     cal = get_calendar(settings['file'], settings['user'])
 
     since = get_since_id(cal, settings.get('since_id'))
 
     cursor = get_tweets(
-        consumer_key=settings['consumer_key'],
-        consumer_secret=settings['consumer_secret'],
-        key=settings['key'],
-        secret=settings['secret'],
-        **max_since
+        consumer_key=keys['consumer_key'],
+        consumer_secret=keys['consumer_secret'],
+        key=keys['key'],
+        secret=keys['secret'],
+        **since
     )
 
     logger.info("Grabbing tweets for @" + settings['user'])
@@ -186,7 +179,7 @@ def tweetcal(settings):
 
 
 def main():
-    parser = creation.setup_args('Grab tweets into an ics file.')
+    parser = tbu.creation.setup_args('Grab tweets into an ics file.')
 
     parser.add_argument('--user', type=str, help='user to grab. Must be in config file.', required=True)
 
@@ -194,9 +187,10 @@ def main():
                         required=False, help='Since ID: search tweets after this one.')
 
     args = parser.parse_args()
-    settings = get_settings(args)
 
-    tweetcal(settings)
+    settings, keys = get_settings_and_keys(args)
+
+    tweetcal(settings, keys)
 
 
 if __name__ == '__main__':
