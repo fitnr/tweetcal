@@ -1,3 +1,5 @@
 *.ics
 *.log
 tweetcal.app/
+*.plist
+*.yaml
