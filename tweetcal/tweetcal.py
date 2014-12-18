@@ -4,25 +4,16 @@
 
 from os import path
 from icalendar import Calendar, Event
-from twitter_bot_utils import helpers
+from twitter_bot_utils import creation, helpers
 from HTMLParser import HTMLParser
 import pytz
-import argparse
 from datetime import timedelta
 import tweepy
 import logging
 
 
-def setup_logger(log, verbose):
+def setup_logger(verbose=None):
     logger = logging.getLogger('tweetcal')
-
-    if log:
-        # file logging
-        logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(log)
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter('%(asctime)s %(name)-16s line %(lineno)d %(levelname)-5s %(message)s'))
-        logger.addHandler(fh)
 
     if verbose:
         ch = logging.StreamHandler()
@@ -36,16 +27,16 @@ def setup_logger(log, verbose):
 def get_settings(args):
     settings = helpers.config_parse(args.config)
 
-    setup_logger(args.log, args.verbose)
+    setup_logger(args.verbose or args.dry_run)
 
     # Remove secret bits.
     settings.update(settings['users'][args.user])
     del settings['users']
 
-    settings['user'] = args.user
+    settings.update({k: v for k, v in vars(args).items() if v is not None})
 
-    if not settings.get('access_token') or not settings.get('access_token_secret'):
-        raise KeyError('Incomplete settings: Don\'t have a key for this user.')
+    if not settings.get('key') or not settings.get('secret'):
+        raise KeyError("Incomplete settings: Don't have a key for this user.")
 
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
 
@@ -153,7 +144,7 @@ def add_to_calendar(cal, cursor):
     ids, status = (), None
 
     # Loop the cursors and create the events if the tweet doesn't yet exist
-    for status in cursor:
+    for status in cursor.items():
         event = create_event(status)
         cal.add_component(event)
         ids = ids + (status.id, )
@@ -189,18 +180,21 @@ def tweetcal(settings):
     logger.info("Starting to grab tweets for " + settings['user'])
     add_to_calendar(cal, cursor)
 
-    logger.info('Writing to file.')
-    write_calendar(cal, settings['calendar_file'])
+    if settings['dry_run']:
+        logger.info('Ending without rewriting file.')
+
+    else:
+        logger.info('Writing tweets to file.')
+        write_calendar(cal, settings['file'])
 
 
 def main():
-    description = 'Grab tweets into an ics file.'
-    parser = argparse.ArgumentParser(description=description)
+    parser = creation.setup_args('Grab tweets into an ics file.')
+
     parser.add_argument('--user', type=str, help='user to grab. Must be in config file.', required=True)
-    parser.add_argument('--config', type=str, help='config file', required=True)
+
     parser.add_argument('--since_id', type=int, default=None,
                         required=False, help='Since ID: search tweets after this one.')
-
     parser.add_argument('--max_id', type=int, default=None,
                         required=False, help='Max ID: search tweets until this one.')
 
