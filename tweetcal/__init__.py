@@ -1,4 +1,4 @@
-from . import tweetcal
+from . import tweetcal, read_archive
 
 __author__ = 'Neil Freeman'
 __license__ = 'GPL'

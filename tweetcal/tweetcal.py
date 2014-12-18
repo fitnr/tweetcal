@@ -27,7 +27,7 @@ def setup_logger(verbose=None):
 def get_settings_and_keys(args):
     setup_logger(args.verbose or args.dry_run)
 
-    argsdict = {k: v for k, v in vars(args).items() if v is not None}
+    argsdict = dict((k, v) for k, v in list(vars(args).items()) if v is not None)
 
     settings, keys = tbu.confighelper.configure(args.user, args.config, **argsdict)
 
@@ -85,10 +85,15 @@ def get_calendar(filename):
     return Calendar.from_ical(contents)
 
 
-def new_calendar(user):
+def new_calendar(user=None):
+    if user:
+        name = user + ' tweets'
+    else:
+        name = 'Tweets'
+
     cal = Calendar()
     cal.add('PRODID', '-//tweetcal//twitter importer//EN')
-    cal.add('X-WR-CALNAME', user + ' tweets')
+    cal.add('X-WR-CALNAME', name)
     return cal
 
 
@@ -105,12 +110,24 @@ def get_since_id(cal, since_id=None):
     return output
 
 
-def set_max_id(cal, max_id):
+def set_max_id(cal, ids):
     '''Combine set of read IDs and just-added IDs to get the new max id'''
-    m = max(cal['X-MAX-TWEET-ID'], max_id)
+    try:
+        max_id = max(ids)
+
+    # If that's empty, there will be a ValueError, which is fine.
+    except ValueError:
+        max_id = 0
+
+    m = max(cal.get('X-MAX-TWEET-ID', 100000), max_id)
     cal['X-MAX-TWEET-ID'] = m
 
     logging.getLogger('tweetcal').debug('Set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
+
+
+def set_color(cal, status):
+    if hasattr(status, 'user') and hasattr(status.user, 'profile_link_color'):
+        cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
 
 
 def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
@@ -125,29 +142,25 @@ def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
     return tweepy.Cursor(api.user_timeline, **kwargs)
 
 
-def add_to_calendar(cal, cursor):
+def add_to_calendar(cal, generator):
     """Add tweets to the calendar object"""
     ids, status = (), None
 
     # Loop the cursors and create the events if the tweet doesn't yet exist
-    for status in cursor.items():
+    for status in generator():
         event = create_event(status)
         cal.add_component(event)
-        ids = ids + (status.id, )
+
+        try:
+            ids = ids + (status.id, )
+        except AttributeError:
+            ids = ids + (int(status.id_str), )
+
 
     logging.getLogger('tweetcal').info('Inserted {} tweets.'.format(len(ids)))
 
-    if status:
-        cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
-
-    try:
-        max_id = max(ids)
-
-    # If that's empty, there will be a ValueError, which is fine.
-    except ValueError:
-        max_id = 0
-
-    set_max_id(cal, max_id)
+    set_color(cal, status)
+    set_max_id(cal, ids)
 
 
 def write_calendar(cal, calendar_file):
@@ -178,7 +191,7 @@ def tweetcal(settings, keys):
     )
 
     logger.info("Grabbing tweets for @" + settings['user'])
-    add_to_calendar(cal, cursor)
+    add_to_calendar(cal, cursor.items)
 
     if settings['dry_run']:
         logger.info('Ending without rewriting file.')
@@ -191,7 +204,8 @@ def tweetcal(settings, keys):
 def main():
     parser = tbu.creation.setup_args('Grab tweets into an ics file.')
 
-    parser.add_argument('--user', type=str, help='user to grab. Must be in config file.', required=True)
+    parser.add_argument(
+        '--user', type=str, help='user to grab. Must be in config file.', required=True)
 
     parser.add_argument('--since_id', type=int, default=None,
                         required=False, help='Since ID: search tweets after this one.')
