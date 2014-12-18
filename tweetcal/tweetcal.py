@@ -69,20 +69,22 @@ def create_event(tweet):
         return event
 
 
-def get_calendar(filename, user):
+def get_calendar(filename):
     '''Open calendar file and return as Calendar object, along with list of IDs retrieved (to avoid dupes)'''
     with open(filename, 'rb') as h:
         contents = h.read()
         logging.getLogger('tweetcal').info("Opened calendar file " + filename)
 
     if contents == '':
-        cal = Calendar()
-        cal.add('PRODID', '-//twitter maker//fake is the new real//EN')
-        cal.add('X-WR-CALNAME', user + ' tweets')
+        raise IOError("Empty Calendar")
 
-    else:
-        cal = Calendar.from_ical(contents)
+    return Calendar.from_ical(contents)
 
+
+def new_calendar(user):
+    cal = Calendar()
+    cal.add('PRODID', '-//tweetcal//twitter importer//EN')
+    cal.add('X-WR-CALNAME', user + ' tweets')
     return cal
 
 
@@ -155,7 +157,11 @@ def tweetcal(settings, keys):
     if len(keys) != 4:
         raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['user'])
 
-    cal = get_calendar(settings['file'], settings['user'])
+    try:
+        cal = get_calendar(settings['file'])
+
+    except IOError:
+        cal = new_calendar(settings['user'])
 
     since = get_since_id(cal, settings.get('since_id'))
 
