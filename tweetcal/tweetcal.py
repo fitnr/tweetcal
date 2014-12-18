@@ -16,9 +16,9 @@ def setup_logger(verbose=None):
     logger = logging.getLogger('tweetcal')
 
     if verbose:
+        logger.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        ch.setFormatter(logging.Formatter('%(levelname)-5s [tweetcal] %(message)s'))
+        ch.setFormatter(logging.Formatter('tweetcal: %(message)s'))
         logger.addHandler(ch)
 
     return logger
@@ -84,11 +84,9 @@ def create_event(tweet):
 
 def get_calendar(filename, user):
     '''Open calendar file and return as Calendar object, along with list of IDs retrieved (to avoid dupes)'''
-    logger = logging.getLogger('tweetcal')
-
     with open(filename, 'rb') as h:
         contents = h.read()
-        logger.debug("Opened calendar file and it's this kind of object: {0}".format(type(contents)))
+        logging.getLogger('tweetcal').info("Opened calendar file " + filename)
 
     if contents == '':
         cal = Calendar()
@@ -116,31 +114,32 @@ def set_max_sin(cal, since_id=None, max_id=None):
     if since_id:
         output['since_id'] = since_id
 
+    logging.getLogger('tweetcal').debug('Setting since_id: {}'.format(str(since_id)))
+
     return output
 
 
 def set_max_id(cal, max_id):
     '''Combine set of read IDs and just-added IDs to get the new max id'''
-    logger = logging.getLogger('tweetcal')
-    logger.debug('set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
     cal['X-MAX-TWEET-ID'] = max_id
 
+    logging.getLogger('tweetcal').debug('Set {1} to {0}'.format(max_id, 'X-MAX-TWEET-ID'))
 
 def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
-    logger = logging.getLogger('tweetcal')
-    logger.debug("Getting tweets with these args {0}".format(kwargs))
 
     # Auth and check twitter
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(key, secret)
     api = tweepy.API(auth)
 
+    logging.getLogger('tweetcal').debug(
+        "Setting up connection to Twitter API (since_id: {})".format(kwargs.get('since_id')))
+
     return tweepy.Cursor(api.user_timeline, **kwargs)
 
 
 def add_to_calendar(cal, cursor):
     """Add tweets to the calendar object"""
-    logger = logging.getLogger('tweetcal')
     ids, status = (), None
 
     # Loop the cursors and create the events if the tweet doesn't yet exist
@@ -149,7 +148,7 @@ def add_to_calendar(cal, cursor):
         cal.add_component(event)
         ids = ids + (status.id, )
 
-    logger.info('Inserted {} tweets.'.format(len(ids)))
+    logging.getLogger('tweetcal').info('Inserted {} tweets.'.format(len(ids)))
 
     if status:
         cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
@@ -177,7 +176,7 @@ def tweetcal(settings):
         **max_since
     )
 
-    logger.info("Starting to grab tweets for " + settings['user'])
+    logger.info("Grabbing tweets for @" + settings['user'])
     add_to_calendar(cal, cursor)
 
     if settings['dry_run']:
