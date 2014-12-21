@@ -1,8 +1,8 @@
 import re
 import time
+import logging
 from datetime import datetime
 from email.utils import formatdate
-import argparse
 from tweepy import API, Status
 from twitter_bot_utils import archive
 from . import tweetcal
@@ -34,25 +34,23 @@ def read_as_status(archivepath):
         yield Status.parse(api, tweet)
 
 
-def to_cal(archivepath, ics):
+def to_cal(archivepath, output, dry_run=None):
     '''Read an archive into a calendar'''
+    logger = logging.getLogger('tweetcal')
 
     generator = lambda: read_as_status(archivepath)
 
     cal = tweetcal.new_calendar()
+
+    logger.info('Reading archive.')
     tweetcal.add_to_calendar(cal, generator)
-    tweetcal.write_calendar(cal, ics)
 
+    logger.info('Added {} tweets to calendar.'.format(len(cal)))
 
-def main():
-    parser = argparse.ArgumentParser(description="Load a twitter archive into an ICS file")
+    if not dry_run:
+        tweetcal.write_calendar(cal, output)
+        logger.info('Wrote {}.'.format(output))
 
-    parser.add_argument('archive', type=str, help="Input path")
-    parser.add_argument('output', type=str, help="destination calendar file")
-
-    args = parser.parse_args()
-
-    to_cal(args.archive, args.output)
-
-if __name__ == '__main__':
-    main()
+def to_cal_args(args):
+    tweetcal.setup_logger(args.verbose)
+    to_cal(args.path, args.output, args.dry_run)

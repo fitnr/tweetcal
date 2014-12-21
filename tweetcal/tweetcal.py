@@ -155,7 +155,6 @@ def add_to_calendar(cal, generator):
         except AttributeError:
             ids = ids + (int(status.id_str), )
 
-
     logging.getLogger('tweetcal').info('Inserted {} tweets.'.format(len(ids)))
 
     set_color(cal, status)
@@ -167,8 +166,10 @@ def write_calendar(cal, calendar_file):
     open(calendar_file, 'wb').write(ical)
 
 
-def tweetcal(settings, keys):
+def tweetcal(args):
     logger = logging.getLogger('tweetcal')
+
+    settings, keys = get_settings_and_keys(args)
 
     if len(keys) != 4:
         raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['user'])
@@ -198,22 +199,6 @@ def tweetcal(settings, keys):
     else:
         logger.info('Writing tweets to file.')
         write_calendar(cal, settings['file'])
-
-
-def main():
-    parser = tbu.creation.setup_args('Grab tweets into an ics file.')
-
-    parser.add_argument(
-        '--user', type=str, help='user to grab. Must be in config file.', required=True)
-
-    parser.add_argument('--since_id', type=int, default=None,
-                        required=False, help='Since ID: search tweets after this one.')
-
-    args = parser.parse_args()
-
-    settings, keys = get_settings_and_keys(args)
-
-    tweetcal(settings, keys)
 
 
 if __name__ == '__main__':

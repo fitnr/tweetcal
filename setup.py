@@ -38,7 +38,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'tweetcal=tweetcal.tweetcal:main',
+            'tweetcal=tweetcal.command:main',
         ],
     },
 
