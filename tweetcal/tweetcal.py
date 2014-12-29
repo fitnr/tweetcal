@@ -169,7 +169,12 @@ def write_calendar(cal, calendar_file):
 def tweetcal(args):
     logger = logging.getLogger('tweetcal')
 
-    settings, keys = get_settings_and_keys(args)
+    try:
+        settings, keys = get_settings_and_keys(args)
+
+    except IOError as e:
+        print(e)
+        exit()
 
     if len(keys) != 4:
         raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['user'])
@@ -199,7 +204,3 @@ def tweetcal(args):
     else:
         logger.info('Writing tweets to file.')
         write_calendar(cal, settings['file'])
-
-
-if __name__ == '__main__':
-    main()

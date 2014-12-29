@@ -10,16 +10,19 @@ def main():
     archiver.add_argument('path', type=str, nargs=1, metavar='PATH', help='Path to archive file')
     archiver.add_argument('output', type=str, nargs=1, metavar='OUTPUT', help='Path to output file')
 
+    archiver.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run.")
+    archiver.add_argument('-v', '--verbose', action='store_true', help="Log to stdout.")
+
     archiver.set_defaults(func=read_archive.to_cal_args)
 
-    load = subparsers.add_parser('load')
+    load = subparsers.add_parser('stream')
     load.add_argument('--config', type=str, help='Config file.')
     load.add_argument('--user', type=str, help='User to grab. Must be in config file.')
 
     load.set_defaults(func=tweetcal.tweetcal)
 
-    parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run.")
-    parser.add_argument('-v', '--verbose', action='store_true', help="Log to stdout.")
+    load.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run.")
+    load.add_argument('-v', '--verbose', action='store_true', help="Log to stdout.")
 
     args = parser.parse_args()
 
