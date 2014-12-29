@@ -1,0 +1,18 @@
+apps:
+    tweetcal:
+        # Get these by registering an app at dev.twitter.com
+        consumer_key: ...
+        consumer_secret: ...
+
+users:
+    # you could have more than one username.
+    your_username_here:
+        # This must be tweetcal
+        app: tweetcal
+
+        # path to the ics file you want to save to
+        file: /path/to/file
+
+        # Get these codes by authenticating your account with your app
+        key: ...
+        secret: ...
