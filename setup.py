@@ -20,7 +20,7 @@ except ImportError:
 setup(
     name='tweetcal',
 
-    version='0.4',
+    version='0.4.1',
 
     description='Python utilities for twitter bots',
 
