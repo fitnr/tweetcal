@@ -100,13 +100,20 @@ def new_calendar(user=None):
 def get_since_id(cal, since_id=None):
     '''Set the max and since ids to request from twitter. If the calendar has a max ID, use it as the since'''
 
-    since_id = since_id or cal.get('X-MAX-TWEET-ID', None)
-    logging.getLogger('tweetcal').debug('Setting since_id: {}'.format(str(since_id)))
+    since_id = (
+        since_id or cal.get('X-MAX-TWEET-ID') or
+        max(int(x.get('X-TWEET-ID', 0)) for x in cal.subcomponents + [{'X-TWEET-ID': None}]) or None
+    )
+
+    logging.getLogger('tweetcal').debug('Setting since_id: {}'.format(since_id))
 
     if since_id:
-        return {'since_id': since_id}
+        return {
+            'since_id': str(since_id)
+        }
     else:
         return {}
+
 
 def set_max_id(cal, ids):
     '''Combine set of read IDs and just-added IDs to get the new max id'''
