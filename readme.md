@@ -24,7 +24,7 @@ This will create `calendar-file.ics`. Test it by opening in your favorite calend
 
 For this section, you'll need [Twitter OAuth credentials](https://dev.twitter.com/oauth/overview/application-owner-access-tokens).
 
-Save those tokens to a yaml or json file. Use the [sample format in the repo](sample-config.yaml) as a guide. Let's say you've saved the file to `~/tweetcal.yaml` and your username is 'screen_name1'. Once that's set up, run:
+Save those tokens to a yaml or json file. Use the [sample format in the repo](https://github.com/fitnr/tweetcal/blob/master/sample-config.yaml) as a guide. Let's say you've saved the file to `~/tweetcal.yaml` and your username is 'screen_name1'. Once that's set up, run:
 
 ```` sh
 $ tweetcal stream --config ~/tweetcal.yaml --user screen_name1

@@ -4,7 +4,7 @@ try:
     from pypandoc import convert
     def read_md(f):
         try:
-            return convert(f, 'rst')
+            return convert(f, 'rst', 'md')
         except (RuntimeError, IOError):
             return ''
 
@@ -20,7 +20,7 @@ except ImportError:
 setup(
     name='tweetcal',
 
-    version='0.4.1',
+    version='0.4.1.2',
 
     description='Python utilities for twitter bots',
 
