@@ -99,16 +99,14 @@ def new_calendar(user=None):
 
 def get_since_id(cal, since_id=None):
     '''Set the max and since ids to request from twitter. If the calendar has a max ID, use it as the since'''
-    output = dict()
+
     since_id = since_id or cal.get('X-MAX-TWEET-ID', None)
-
-    if since_id:
-        output['since_id'] = since_id
-
     logging.getLogger('tweetcal').debug('Setting since_id: {}'.format(str(since_id)))
 
-    return output
-
+    if since_id:
+        return {'since_id': since_id}
+    else:
+        return {}
 
 def set_max_id(cal, ids):
     '''Combine set of read IDs and just-added IDs to get the new max id'''
@@ -163,7 +161,7 @@ def add_to_calendar(cal, generator):
 
 def write_calendar(cal, calendar_file):
     ical = cal.to_ical()
-    open(calendar_file, 'wb').write(ical)
+    open(path.expanduser(calendar_file), 'wb').write(ical)
 
 
 def tweetcal(args):
@@ -196,7 +194,13 @@ def tweetcal(args):
     )
 
     logger.info("Grabbing tweets for @" + settings['user'])
-    add_to_calendar(cal, cursor.items)
+
+    try:
+        add_to_calendar(cal, cursor.items)
+
+    except tweepy.error.TweepError as e:
+        print(e.message)
+        exit(-1)
 
     if settings['dry_run']:
         logger.info('Ending without rewriting file.')

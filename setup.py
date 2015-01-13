@@ -5,7 +5,7 @@ try:
     def read_md(f):
         try:
             return convert(f, 'rst')
-        except IOError:
+        except (RuntimeError, IOError):
             return ''
 
 except ImportError:
