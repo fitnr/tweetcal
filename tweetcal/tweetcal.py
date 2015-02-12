@@ -75,7 +75,9 @@ def create_event(tweet):
 
 def get_calendar(filename):
     '''Open calendar file and return as Calendar object, along with list of IDs retrieved (to avoid dupes)'''
-    with open(filename, 'rb') as h:
+    expanded = path.expanduser(filename)
+
+    with open(expanded, 'rb') as h:
         contents = h.read()
         logging.getLogger('tweetcal').info("Opened calendar file " + filename)
 
@@ -86,6 +88,7 @@ def get_calendar(filename):
 
 
 def new_calendar(user=None):
+    logging.getLogger('tweetcal').info("Creating new calendar.")
     if user:
         name = user + ' tweets'
     else:
@@ -167,8 +170,10 @@ def add_to_calendar(cal, generator):
 
 
 def write_calendar(cal, calendar_file):
-    ical = cal.to_ical()
-    open(path.expanduser(calendar_file), 'wb').write(ical)
+    filepath = path.expanduser(calendar_file)
+    logging.getLogger('tweetcal').info('Saving to {}.'.format(filepath))
+
+    open(filepath, 'wb').write(cal.to_ical())
 
 
 def tweetcal(args):
@@ -187,8 +192,11 @@ def tweetcal(args):
     try:
         cal = get_calendar(settings['file'])
 
-    except IOError:
+    except IOError as e:
+        logger.info("Didn't find %s, got error: %s", settings['file'], e)
         cal = new_calendar(settings['user'])
+
+    logger.info('since: %s', settings.get('since_id'))
 
     since = get_since_id(cal, settings.get('since_id'))
 
