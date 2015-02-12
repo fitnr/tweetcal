@@ -102,7 +102,7 @@ def get_since_id(cal, since_id=None):
 
     since_id = (
         since_id or cal.get('X-MAX-TWEET-ID') or
-        max(int(x.get('X-TWEET-ID', 0)) for x in cal.subcomponents + [{'X-TWEET-ID': None}]) or None
+        max(int(x.get('X-TWEET-ID') or 0) for x in cal.subcomponents + [{'X-TWEET-ID': 0}]) or None
     )
 
     logging.getLogger('tweetcal').debug('Setting since_id: {}'.format(since_id))
