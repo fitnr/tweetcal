@@ -33,6 +33,8 @@ def get_settings_and_keys(args):
 
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
 
+    settings['limit'] = max(getattr(args, 'max', 100), 1)
+
     return settings, keys
 
 
@@ -149,12 +151,13 @@ def get_tweets(consumer_key, consumer_secret, key, secret, **kwargs):
     return tweepy.Cursor(api.user_timeline, **kwargs)
 
 
-def add_to_calendar(cal, generator):
+def add_to_calendar(cal, generator, limit=None):
     """Add tweets to the calendar object"""
     ids, status = (), None
 
     # Loop the cursors and create the events if the tweet doesn't yet exist
-    for status in generator():
+
+    for status in generator(limit):
         event = create_event(status)
         cal.add_component(event)
 
@@ -211,7 +214,7 @@ def tweetcal(args):
     logger.info("Grabbing tweets for @" + settings['user'])
 
     try:
-        add_to_calendar(cal, cursor.items)
+        add_to_calendar(cal, cursor.items, limit=settings['limit'])
 
     except tweepy.error.TweepError as e:
         print(e.message)
