@@ -20,7 +20,7 @@ except ImportError:
 setup(
     name='tweetcal',
 
-    version='0.4.2-1',
+    version='0.4.3',
 
     description='Python utilities for twitter bots',
 
@@ -32,7 +32,7 @@ setup(
 
     author_email='contact@fakeisthenewreal.org',
 
-    license='GPL',
+    license='GPLv3',
 
     packages=['tweetcal'],
 
