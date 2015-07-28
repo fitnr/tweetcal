@@ -7,3 +7,8 @@ dist
 tweetcal.app/
 *.plist
 *.yaml
+.tox
+*.egg
+.eggs
+readme.rst
+
