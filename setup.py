@@ -9,7 +9,7 @@ except IOError:
 setup(
     name='tweetcal',
 
-    version='0.4.3',
+    version='0.4.4',
 
     description='Python utilities for twitter bots',
 
