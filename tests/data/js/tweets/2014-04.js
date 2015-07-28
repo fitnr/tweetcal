@@ -69,6 +69,7 @@ Grailbird.data.tweets_2014_04 =
         },
 
         "geo": {},
+        "id": 494625026159951872,
         "id_str": "494625026159951872",
         "text": "RT @arbitrarynames: Regina Aura",
         "created_at": "2014-07-30 23:15:24 +0000",

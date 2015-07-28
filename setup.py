@@ -42,6 +42,8 @@ setup(
         ],
     },
 
+    test_suite='tests',
+
     install_requires=[
         'icalendar==3.8.4',
         'tweepy==3.1.0',
