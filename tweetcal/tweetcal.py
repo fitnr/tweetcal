@@ -15,7 +15,11 @@ from __future__ import unicode_literals, print_function
 from os import path
 from icalendar import Calendar, Event
 import twitter_bot_utils as tbu
-from HTMLParser import HTMLParser
+try:
+    from HTMLParser import HTMLParser
+    html = HTMLParser()
+except ImportError:
+    import html
 import pytz
 from datetime import timedelta
 import tweepy
@@ -68,7 +72,7 @@ def create_event(tweet):
 
         # Add tweet's text.
         text = tbu.helpers.replace_urls(tweet)
-        text = HTMLParser().unescape(text)
+        text = html.unescape(text)
         event.add('summary', text)
 
         # Add tweet's date.
