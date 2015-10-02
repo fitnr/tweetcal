@@ -4,3 +4,7 @@
 
 README.rst: README.md
 	pandoc $< -o $@
+
+test:
+	tweetcal archive -n data/js/tweets test.ics
+	tweetcal stream -n --config sample-config.yaml --user your_username_here || :

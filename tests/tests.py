@@ -9,7 +9,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 import os
-import sys
 import tweepy
 import unittest
 from tweetcal import tweetcal, read_archive
