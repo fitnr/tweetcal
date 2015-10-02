@@ -93,7 +93,7 @@ def get_calendar(filename):
         contents = h.read()
         logging.getLogger('tweetcal').info("Opened calendar file " + filename)
 
-    if contents == '':
+    if len(contents) == 0:
         raise IOError("Empty Calendar")
 
     return Calendar.from_ical(contents)
