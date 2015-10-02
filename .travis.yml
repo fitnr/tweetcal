@@ -2,7 +2,6 @@ language: python
 
 os:
  - linux
- - osx
 
 python:
  - pypy
@@ -14,7 +13,3 @@ python:
 
 script:
  - python setup.py test
-
-matrix:
-  allow_failures:
-    - python: 3.5
