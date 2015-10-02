@@ -186,7 +186,8 @@ def write_calendar(cal, calendar_file):
     filepath = path.expanduser(calendar_file)
     logging.getLogger('tweetcal').info('Saving to {}.'.format(filepath))
 
-    open(filepath, 'wb').write(cal.to_ical())
+    with open(filepath, 'wb') as fh:
+        fh.write(cal.to_ical())
 
 
 def tweetcal(args):
