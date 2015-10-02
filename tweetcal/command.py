@@ -28,14 +28,16 @@ def main():
     load = subparsers.add_parser('stream')
     load.set_defaults(func=tweetcal.tweetcal)
     load.add_argument('--config', type=str, help='Config file.')
-    load.add_argument('--user', type=str, help='User to grab. Must be in config file.')
-    load.add_argument('-x', '--max', type=int, help='Maximum number of tweets to download default: 100.')
+    load.add_argument('--user', dest='screen_name', type=str, help='User to grab. Must be in config file.')
+    load.add_argument('-x', '--max', default=100, type=int, help='Maximum number of tweets to download default: 100.')
     load.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run.")
     load.add_argument('-v', '--verbose', action='store_true', help="Log to stdout.")
 
     args = parser.parse_args()
 
-    args.func(args)
+    kwargs = {k: v for k, v in vars(args).items() if k not in ('func')}
+
+    args.func(**kwargs)
 
 if __name__ == '__main__':
     main()

@@ -69,6 +69,7 @@ def to_cal(archivepath, output, dry_run=None, **kwargs):
         tweetcal.write_calendar(cal, output)
         logger.info('Wrote {}.'.format(output))
 
-def to_cal_args(args):
-    tweetcal.setup_logger(args.verbose)
-    to_cal(args.path, args.output, args.dry_run, since_id=args.since_id, max_id=args.max_id)
+
+def to_cal_args(path, output, **kwargs):
+    tweetcal.setup_logger(kwargs.get('verbose'))
+    to_cal(path, output, dry_run=kwargs.get('dry_run'), since_id=kwargs.get('since_id'), max_id=kwargs.get('max_id'))

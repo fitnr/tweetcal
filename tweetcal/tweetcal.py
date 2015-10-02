@@ -34,16 +34,20 @@ def setup_logger(verbose=None):
     return logger
 
 
-def get_settings_and_keys(args):
-    setup_logger(args.verbose or args.dry_run)
+def get_settings_and_keys(screen_name, config, **kwargs):
+    '''Get settings and OAuth keys based on passed Namespace of args
+    - screen_name (string)
+    - config (file path)
+    - verbose (boolean)
+    - dry_run (boolean)
+    '''
+    setup_logger(kwargs.pop('verbose', None) or kwargs.pop('dry_run', None))
 
-    argsdict = dict((k, v) for k, v in list(vars(args).items()) if v is not None)
+    settings, keys = tbu.confighelper.configure(screen_name, 'tweetcal', file_name=config, **kwargs)
 
-    settings, keys = tbu.confighelper.configure(args.user, args.config, **argsdict)
-
+    settings['screen_name'] = screen_name
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
-
-    settings['limit'] = max(getattr(args, 'max', 100), 1)
+    settings['limit'] = max(kwargs.get('max', 100), 1)
 
     return settings, keys
 
@@ -99,10 +103,10 @@ def get_calendar(filename):
     return Calendar.from_ical(contents)
 
 
-def new_calendar(user=None):
+def new_calendar(screen_name=None):
     logging.getLogger('tweetcal').info("Creating new calendar.")
-    if user:
-        name = user + ' tweets'
+    if screen_name:
+        name = screen_name + ' tweets'
     else:
         name = 'Tweets'
 
@@ -145,7 +149,7 @@ def set_max_id(cal, ids):
 
 
 def set_color(cal, status):
-    if hasattr(status, 'user') and hasattr(status.user, 'profile_link_color'):
+    if hasattr(status, 'screen_name') and hasattr(status.user, 'profile_link_color'):
         cal['X-APPLE-CALENDAR-COLOR'] = '#' + status.user.profile_link_color
 
 
@@ -190,25 +194,25 @@ def write_calendar(cal, calendar_file):
         fh.write(cal.to_ical())
 
 
-def tweetcal(args):
+def tweetcal(screen_name, config, **kwargs):
     logger = logging.getLogger('tweetcal')
 
     try:
-        settings, keys = get_settings_and_keys(args)
+        settings, keys = get_settings_and_keys(screen_name, config, **kwargs)
 
     except IOError as e:
         print(e)
         exit()
 
     if len(keys) != 4:
-        raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['user'])
+        raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['screen_name'])
 
     try:
         cal = get_calendar(settings['file'])
 
     except IOError as e:
         logger.info("Didn't find %s, got error: %s", settings['file'], e)
-        cal = new_calendar(settings['user'])
+        cal = new_calendar(settings['screen_name'])
 
     logger.info('since: %s', settings.get('since_id'))
 
@@ -222,7 +226,7 @@ def tweetcal(args):
         **since
     )
 
-    logger.info("Grabbing tweets for @" + settings['user'])
+    logger.info("Grabbing tweets for @" + settings['screen_name'])
 
     try:
         add_to_calendar(cal, cursor.items, limit=settings['limit'])
