@@ -11,15 +11,18 @@
 from setuptools import setup
 
 try:
-    readme = open('./readme.rst', 'r').read()
+    readme = open('./README.rst', 'r').read()
 
 except IOError:
-    readme = open('./readme.md', 'r').read()
+    try:
+        readme = open('./README.md', 'r').read()
+    except IOError:
+        readme = ''
 
 setup(
     name='tweetcal',
 
-    version='0.4.5',
+    version='0.4.5.post1',
 
     description='Convert a tweet stream to ics calendar',
 
