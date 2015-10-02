@@ -11,6 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+from __future__ import unicode_literals, print_function
 from os import path
 from icalendar import Calendar, Event
 import twitter_bot_utils as tbu
@@ -58,7 +59,7 @@ def create_event(tweet):
 
     try:
         # Add link to tweet.
-        url = u'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
+        url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
         event.add('url', url)
 
         # Add tweet's text.
@@ -72,13 +73,13 @@ def create_event(tweet):
         event.add('dtend', dtend)
 
         # Add UID and special field for ID.
-        event.add('uid', u'{0}@{1}.twitter'.format(tweet.id_str, tweet.user.screen_name))
+        event.add('uid', '{0}@{1}.twitter'.format(tweet.id_str, tweet.user.screen_name))
         event['X-TWEET-ID'] = tweet.id_str
 
     except Exception as e:
         logger = logging.getLogger('tweetcal')
         logger.error(e)
-        logger.error(u"{0} [{1} created at {2}]".format(tweet.text, tweet.id_str, tweet.created_at))
+        logger.error("{0} [{1} created at {2}]".format(tweet.text, tweet.id_str, tweet.created_at))
 
     else:
         return event

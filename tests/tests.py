@@ -9,10 +9,16 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 import os
+import sys
 import tweepy
 import unittest
 from tweetcal import tweetcal, read_archive
 from icalendar import Calendar, Event
+
+if sys.version_info.major > 2:
+    err = ValueError
+else:
+    err = IOError
 
 TWEET = {
     "source": "\u003Ca href=\"http:\/\/twitter.com\/download\/iphone\" rel=\"nofollow\"\u003ETwitter for iPhone\u003C\/a\u003E",
@@ -81,7 +87,7 @@ class test_twitter_bot_utils(unittest.TestCase):
 
         empty = os.path.join(os.path.dirname(__file__), 'data', 'empty.ics')
 
-        self.assertRaises(IOError, tweetcal.get_calendar, empty)
+        self.assertRaises(err, tweetcal.get_calendar, empty)
         self.assertRaises(IOError, tweetcal.get_calendar, 'fake-2342.ics')
 
     def test_save_archive(self):
