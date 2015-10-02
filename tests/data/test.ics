@@ -1,0 +1,5 @@
+BEGIN:VCALENDAR
+PRODID:-//tweetcal//twitter importer//EN
+X-MAX-TWEET-ID:100000
+X-WR-CALNAME:Tweets
+END:VCALENDAR

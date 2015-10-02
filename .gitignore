@@ -2,7 +2,6 @@
 *.egg-info
 build
 dist
-*.ics
 *.log
 tweetcal.app/
 *.plist
