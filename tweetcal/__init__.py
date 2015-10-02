@@ -13,4 +13,4 @@ from . import tweetcal, read_archive
 __author__ = 'Neil Freeman'
 __license__ = 'GPL-3.0'
 __all__ = ['tweetcal']
-__version__ = '0.4.4'
+__version__ = '0.4.5'

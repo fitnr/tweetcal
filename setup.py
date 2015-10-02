@@ -19,9 +19,9 @@ except IOError:
 setup(
     name='tweetcal',
 
-    version='0.4.4',
+    version='0.4.5',
 
-    description='Python utilities for twitter bots',
+    description='Convert a tweet stream to ics calendar',
 
     long_description=readme,
 
@@ -52,10 +52,11 @@ setup(
 
     test_suite='tests',
 
+    use_2to3=True,
+
     install_requires=[
-        'icalendar==3.8.4',
-        'tweepy==3.1.0',
+        'icalendar>=3.8.4,<4.0',
+        'tweepy>=3.1.0,<4.0',
         'twitter_bot_utils >=0.6.2, <1'
     ]
 )
-
