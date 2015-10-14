@@ -33,17 +33,24 @@ def fix_timeformat(string):
 def read_as_status(archivepath, since_id=None, max_id=None):
     api = API()
 
-    since_id = since_id or 1
+    since_id = since_id or 0
     max_id = max_id or float("inf")
 
     for tweet in archive.read_json(archivepath):
 
-        tweet['created_at'] = fix_timeformat(tweet['created_at'])
+        try:
+            tweet['created_at'] = fix_timeformat(tweet['created_at'])
+        except AttributeError:
+            tweet['created_at'] = fix_timeformat(tweet['timestamp'])
 
         if tweet.get('retweeted_status'):
             tweet['retweeted_status']['created_at'] = fix_timeformat(tweet['retweeted_status']['created_at'])
 
-        i = int(tweet['id'])
+        try:
+            i = int(tweet['id_str'])
+        except AttributeError:
+            i = int(tweet['tweet_id'])
+            tweet['id_str'] = tweet['tweet_id']
 
         if i > since_id and i < max_id:
             yield Status.parse(api, tweet)

@@ -45,11 +45,12 @@ def get_settings_and_keys(screen_name, config, **kwargs):
     - verbose (boolean)
     - dry_run (boolean)
     '''
-    setup_logger(kwargs.pop('verbose', None) or kwargs.pop('dry_run', None))
+    setup_logger(kwargs.get('verbose') or kwargs.get('dry_run'))
 
     settings, keys = tbu.confighelper.configure(screen_name, 'tweetcal', file_name=config, **kwargs)
 
     settings['screen_name'] = screen_name
+
     settings['file'] = path.join(path.dirname(__file__), settings['file'])
     settings['limit'] = max(kwargs.get('max', 100), 1)
 
@@ -67,7 +68,11 @@ def create_event(tweet):
 
     try:
         # Add link to tweet.
-        url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
+        try:
+            url = 'http://twitter.com/{0}/status/{1}'.format(tweet.user.screen_name, tweet.id_str)
+        except AttributeError:
+            url = 'http://twitter.com/{0}/status/{1}'.format(tweet.screen_name, tweet.id_str)
+
         event.add('url', url)
 
         # Add tweet's text.
@@ -81,7 +86,11 @@ def create_event(tweet):
         event.add('dtend', dtend)
 
         # Add UID and special field for ID.
-        event.add('uid', '{0}@{1}.twitter'.format(tweet.id_str, tweet.user.screen_name))
+        try:
+            event.add('uid', '{0}@{1}.twitter'.format(tweet.id_str, tweet.user.screen_name))
+        except AttributeError:
+            event.add('uid', '{0}@{1}.twitter'.format(tweet.id_str, 'archive'))
+
         event['X-TWEET-ID'] = tweet.id_str
 
     except Exception as e:
