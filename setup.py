@@ -22,7 +22,7 @@ except IOError:
 setup(
     name='tweetcal',
 
-    version='0.5.0',
+    version='0.5.1',
 
     description='Convert a tweet stream to ics calendar',
 
@@ -60,6 +60,6 @@ setup(
     install_requires=[
         'icalendar>=3.8.4,<4.0',
         'tweepy>=3.1.0,<4.0',
-        'twitter_bot_utils >=0.6.2, <1'
+        'twitter_bot_utils>=0.9.5,<1'
     ]
 )
