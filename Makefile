@@ -8,3 +8,12 @@ README.rst: README.md
 test:
 	tweetcal archive -n data/js/tweets test.ics
 	tweetcal stream -n --config sample-config.yaml --user your_username_here || :
+
+.PHONY: deploy
+deploy: README.rst
+	rm -r dist
+	python3 setup.py sdist bdist_wheel
+	python setup.py sdist
+	twine upload dist/*
+	git push
+	git push --tags
