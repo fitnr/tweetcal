@@ -26,7 +26,6 @@ import twitter_bot_utils as tbu
 import tweepy
 
 
-
 def setup_logger(verbose=None):
     logger = logging.getLogger('tweetcal')
 
@@ -39,7 +38,7 @@ def setup_logger(verbose=None):
     return logger
 
 
-def get_settings_and_keys(screen_name, config, **kwargs):
+def get_settings(screen_name, config, **kwargs):
     '''Get settings and OAuth keys based on passed Namespace of args
     - screen_name (string)
     - config (file path)
@@ -48,14 +47,12 @@ def get_settings_and_keys(screen_name, config, **kwargs):
     '''
     setup_logger(kwargs.get('verbose') or kwargs.get('dry_run'))
 
-    settings, keys = tbu.confighelper.configure(screen_name, 'tweetcal', file_name=config, **kwargs)
+    settings = tbu.confighelper.configure(screen_name, app='tweetcal', file_name=config, **kwargs)
 
     settings['screen_name'] = screen_name
-
-    settings['file'] = path.join(path.dirname(__file__), settings['file'])
     settings['limit'] = max(kwargs.get('max', 100), 1)
 
-    return settings, keys
+    return settings
 
 
 def parse_date(datetime):
@@ -212,14 +209,11 @@ def tweetcal(screen_name, config, **kwargs):
     logger = logging.getLogger('tweetcal')
 
     try:
-        settings, keys = get_settings_and_keys(screen_name, config, **kwargs)
+        settings = get_settings(screen_name, config, **kwargs)
 
     except IOError as e:
         print(e)
         exit()
-
-    if len(keys) != 4:
-        raise ValueError("Incomplete settings: Don't have complete keys for @" + settings['screen_name'])
 
     try:
         cal = get_calendar(settings['file'])
@@ -233,10 +227,10 @@ def tweetcal(screen_name, config, **kwargs):
     since = get_since_id(cal, settings.get('since_id'))
 
     cursor = get_tweets(
-        consumer_key=keys['consumer_key'],
-        consumer_secret=keys['consumer_secret'],
-        key=keys['key'],
-        secret=keys['secret'],
+        consumer_key=settings['consumer_key'],
+        consumer_secret=settings['consumer_secret'],
+        key=settings['key'],
+        secret=settings['secret'],
         **since
     )
 

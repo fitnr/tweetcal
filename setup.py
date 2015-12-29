@@ -60,6 +60,6 @@ setup(
     install_requires=[
         'icalendar>=3.8.4,<4.0',
         'tweepy>=3.1.0,<4.0',
-        'twitter_bot_utils>=0.9.5,<1'
+        'twitter_bot_utils>=0.10.3,<1'
     ]
 )
