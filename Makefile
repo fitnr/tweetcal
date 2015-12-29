@@ -4,6 +4,7 @@
 
 README.rst: README.md
 	pandoc $< -o $@
+	python setup.py check --restructuredtext --strict
 
 test:
 	tweetcal archive -n data/js/tweets test.ics

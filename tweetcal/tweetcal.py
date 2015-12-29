@@ -13,17 +13,18 @@
 
 from __future__ import unicode_literals, print_function
 from os import path
-from icalendar import Calendar, Event
-import twitter_bot_utils as tbu
+from datetime import timedelta
+import logging
 try:
     from HTMLParser import HTMLParser
     html = HTMLParser()
 except ImportError:
     import html
 import pytz
-from datetime import timedelta
+from icalendar import Calendar, Event
+import twitter_bot_utils as tbu
 import tweepy
-import logging
+
 
 
 def setup_logger(verbose=None):
