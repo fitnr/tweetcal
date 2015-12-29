@@ -22,7 +22,7 @@ except IOError:
 setup(
     name='tweetcal',
 
-    version='0.5.1',
+    version='0.5.2',
 
     description='Convert a tweet stream to ics calendar',
 
